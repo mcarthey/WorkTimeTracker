@@ -8,4 +8,8 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Models\TaskTimer.cs~RF1753efeb.TMP" />
+  </ItemGroup>
+
 </Project>

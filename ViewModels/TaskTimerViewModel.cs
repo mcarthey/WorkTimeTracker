@@ -14,6 +14,9 @@ namespace WorkTimeTracker.ViewModels
     {
         private readonly TaskTimer _task;
         private readonly Timer _uiTimer;
+        private bool _isRunning;
+        private bool _justStopped;
+
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -23,8 +26,13 @@ namespace WorkTimeTracker.ViewModels
             _uiTimer = new Timer(1000);
             _uiTimer.Elapsed += (_, _) =>
             {
-                OnPropertyChanged(nameof(ElapsedFormatted));
-                OnPropertyChanged(nameof(TaskElapsedSeconds));
+                // Update elapsed time continuously while running
+                if (IsRunning)
+                {
+                    _task.UpdateElapsed();
+                    OnPropertyChanged(nameof(ElapsedFormatted));
+                    OnPropertyChanged(nameof(TaskElapsedSeconds));
+                }
             };
         }
 
@@ -43,28 +51,63 @@ namespace WorkTimeTracker.ViewModels
 
         public string ElapsedFormatted => _task.Elapsed.ToString(@"hh\:mm\:ss");
 
-        // NEW: numeric value the main VM can sum
+        // numeric value the main VM can sum
         public double TaskElapsedSeconds => _task.Elapsed.TotalSeconds;
-
-        public bool IsRunning => _task.IsRunning;
 
         public ICommand StartCommand => new RelayCommand(Start);
         public ICommand StopCommand => new RelayCommand(Stop);
 
-        private void Start()
+        public bool IsRunning
         {
-            _task.Start();
-            _uiTimer.Start();
-            OnPropertyChanged(nameof(IsRunning));
+            get => _isRunning;
+            set
+            {
+                if (_isRunning != value)
+                {
+                    _isRunning = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
-        private void Stop()
+        public bool JustStopped
         {
-            _task.Stop();
-            _uiTimer.Stop();
-            OnPropertyChanged(nameof(IsRunning));
-            OnPropertyChanged(nameof(ElapsedFormatted));
-            OnPropertyChanged(nameof(TaskElapsedSeconds));
+            get => _justStopped;
+            set
+            {
+                if (_justStopped != value)
+                {
+                    _justStopped = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private void Start()
+        {
+            if (!IsRunning)
+            {
+                _task.Start();
+                _uiTimer.Start();
+                IsRunning = true; // 🔔 Triggers parent reaction via PropertyChanged
+            }
+        }
+
+        public async void Stop()
+        {
+            if (IsRunning)
+            {
+                _task.Stop();
+                _uiTimer.Stop();
+                IsRunning = false;
+                OnPropertyChanged(nameof(ElapsedFormatted));
+                OnPropertyChanged(nameof(TaskElapsedSeconds));
+
+                // 🔴 Flash indicator
+                JustStopped = true;
+                await Task.Delay(800); // 0.8 sec pulse
+                JustStopped = false;
+            }
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)

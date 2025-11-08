@@ -28,6 +28,49 @@
                   RowHeight="36"
                   CanUserAddRows="False"
                   CanUserDeleteRows="False">
+            <DataGrid.Resources>
+                <!-- Remove blue selection highlight -->
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black"/>
+
+                <!-- Remove black focus border around current cell -->
+                <Style TargetType="DataGridCell">
+                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="BorderBrush" Value="Transparent"/>
+                </Style>
+
+                <!-- Remove button focus visuals as well -->
+                <Style TargetType="Button">
+                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                </Style>
+            </DataGrid.Resources>
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <!-- Green highlight for running task -->
+                        <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                            <Setter Property="Background" Value="#AAE6FFCC"/>
+                        </DataTrigger>
+
+                        <!-- Red pulse for just stopped -->
+                        <DataTrigger Binding="{Binding JustStopped}" Value="True">
+                            <Setter Property="Background" Value="#FFFFB3B3"/>
+                            <Setter Property="Opacity" Value="1.0"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+
+                    <!-- Fade transition animation for row background -->
+                    <Style.Resources>
+                        <Storyboard x:Key="FadeOutStoryboard">
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                             From="1.0" To="1.0"
+                                             Duration="0:0:0.2"/>
+                        </Storyboard>
+                    </Style.Resources>
+                </Style>
+            </DataGrid.RowStyle>
+
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Task"
                                     Binding="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
