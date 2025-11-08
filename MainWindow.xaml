@@ -115,13 +115,14 @@
                     VerticalAlignment="Center"/>
         </Grid>
 
-        <!-- ====== Rounded container around DataGrid ====== -->
+        <!-- ====== DataGrid Container ====== -->
         <Border CornerRadius="6"
                 Background="White"
                 BorderBrush="#DDD"
                 BorderThickness="1"
                 SnapsToDevicePixels="True"
                 Padding="0">
+
             <DataGrid ItemsSource="{Binding Tasks}"
                       AutoGenerateColumns="False"
                       CanUserAddRows="False"
@@ -136,32 +137,24 @@
                       AlternationCount="2"
                       SelectionMode="Single"
                       SelectionUnit="FullRow"
-                      SelectedItem="{x:Null}">
+                      SelectedItem="{x:Null}"
+                      EnableRowVirtualization="False"
+                      EnableColumnVirtualization="False">
 
-                <!-- Row highlight logic -->
+                <!-- === RowStyle binds to ViewModel brush === -->
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow">
-                        <Setter Property="Background" Value="White"/>
+                        <Setter Property="Background" Value="{Binding RowBrush}"/>
                         <Style.Triggers>
-                            <!-- Alternate base row color -->
+                            <!-- Alternate slight tint -->
                             <Trigger Property="AlternationIndex" Value="1">
-                                <Setter Property="Background" Value="#FAFAFA"/>
+                                <Setter Property="Opacity" Value="0.96"/>
                             </Trigger>
-
-                            <!-- Green when running -->
-                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                <Setter Property="Background" Value="#AAE6FFCC"/>
-                            </DataTrigger>
-
-                            <!-- Red flash when stopped -->
-                            <DataTrigger Binding="{Binding JustStopped}" Value="True">
-                                <Setter Property="Background" Value="#FFFFB3B3"/>
-                            </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </DataGrid.RowStyle>
 
-                <!-- Columns -->
+                <!-- === Columns === -->
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Task"
                                         Binding="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"

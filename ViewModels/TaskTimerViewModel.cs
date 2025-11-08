@@ -3,6 +3,8 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Timers;
 using System.Windows.Input;
+using System.Windows.Media;
+using WorkTimeTracker.Helpers;
 using WorkTimeTracker.Models;
 
 // alias to avoid confusion
@@ -16,6 +18,7 @@ namespace WorkTimeTracker.ViewModels
         private readonly Timer _uiTimer;
         private bool _isRunning;
         private bool _justStopped;
+        public SolidColorBrush RowBrush { get; } = new SolidColorBrush(Colors.White);
 
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -66,9 +69,18 @@ namespace WorkTimeTracker.ViewModels
                 {
                     _isRunning = value;
                     OnPropertyChanged();
+
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        if (_isRunning)
+                            BrushAnimator.AnimateBrush(RowBrush, Color.FromRgb(170, 255, 204), 0.2);
+                        else
+                            BrushAnimator.AnimateBrush(RowBrush, Color.FromRgb(255, 179, 179), 0.2, hold: true);
+                    });
                 }
             }
         }
+
 
         public bool JustStopped
         {
