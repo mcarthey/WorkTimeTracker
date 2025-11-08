@@ -5,102 +5,193 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Work Time Tracker"
-        Height="450" Width="700">
+        Height="500" Width="760"
+        FontFamily="Segoe UI"
+        FontSize="13"
+        Background="#F8F9FB">
 
-    <DockPanel Margin="10">
-        <StackPanel DockPanel.Dock="Top" Orientation="Vertical">
-            <TextBlock Text="{Binding CurrentTime}"
-                       FontSize="22"
-                       FontWeight="Bold"
-                       Margin="0,0,0,4"/>
-            <TextBlock Text="{Binding TotalTimeFormatted}"
-                       FontSize="18"
-                       Margin="0,0,0,8"/>
-            <Button Content="Add Task"
+    <DockPanel Margin="20">
+
+        <!-- ====== Shared styles/resources ====== -->
+        <DockPanel.Resources>
+            <!-- Remove blue selection highlight -->
+            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
+            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black"/>
+
+            <Style TargetType="DataGridCell">
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+            </Style>
+
+            <!-- Rounded button template -->
+            <Style TargetType="Button">
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Padding" Value="6,2"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="root"
+                                    CornerRadius="3"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  Margin="2"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="root" Property="Opacity" Value="0.85"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="root" Property="Opacity" Value="0.6"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="Content" Value="Start">
+                        <Setter Property="Background" Value="#44C767"/>
+                        <Setter Property="BorderBrush" Value="#3AAA59"/>
+                    </Trigger>
+                    <Trigger Property="Content" Value="Stop">
+                        <Setter Property="Background" Value="#E74C3C"/>
+                        <Setter Property="BorderBrush" Value="#C84133"/>
+                    </Trigger>
+                    <Trigger Property="Content" Value="➕ Add Task">
+                        <Setter Property="Background" Value="#3C91E6"/>
+                        <Setter Property="BorderBrush" Value="#2B6FB6"/>
+                    </Trigger>
+                    <Trigger Property="Content" Value="X">
+                        <Setter Property="Background" Value="#999999"/>
+                        <Setter Property="BorderBrush" Value="#7A7A7A"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Column header style -->
+            <Style TargetType="DataGridColumnHeader">
+                <Setter Property="Background" Value="#F3F3F3"/>
+                <Setter Property="Foreground" Value="#444"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="BorderBrush" Value="#DDD"/>
+                <Setter Property="Padding" Value="6,3"/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            </Style>
+        </DockPanel.Resources>
+
+        <!-- ====== Header area ====== -->
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Vertical" Grid.Column="0">
+                <TextBlock Text="{Binding CurrentTime}"
+                           FontSize="28"
+                           FontWeight="SemiBold"
+                           Foreground="#333"
+                           Margin="0,0,0,4"/>
+                <TextBlock Text="{Binding TotalTimeFormatted}"
+                           FontSize="18"
+                           Foreground="#666"/>
+            </StackPanel>
+
+            <Button Content="➕ Add Task"
                     Command="{Binding AddTaskCommand}"
-                    Width="120"
-                    Margin="0,0,0,10"/>
-        </StackPanel>
+                    FontWeight="Bold"
+                    FontSize="14"
+                    Width="140"
+                    Padding="6"
+                    Margin="10,0,0,0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"/>
+        </Grid>
 
-        <DataGrid ItemsSource="{Binding Tasks}"
-                  AutoGenerateColumns="False"
-                  Margin="0,10,0,0"
-                  RowHeight="36"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False">
-            <DataGrid.Resources>
-                <!-- Remove blue selection highlight -->
-                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
-                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black"/>
+        <!-- ====== Rounded container around DataGrid ====== -->
+        <Border CornerRadius="6"
+                Background="White"
+                BorderBrush="#DDD"
+                BorderThickness="1"
+                SnapsToDevicePixels="True"
+                Padding="0">
+            <DataGrid ItemsSource="{Binding Tasks}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      RowHeight="42"
+                      Background="Transparent"
+                      BorderThickness="0"
+                      HorizontalGridLinesBrush="#EEE"
+                      Margin="0"
+                      AlternationCount="2"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      SelectedItem="{x:Null}">
 
-                <!-- Remove black focus border around current cell -->
-                <Style TargetType="DataGridCell">
-                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                    <Setter Property="BorderThickness" Value="0"/>
-                    <Setter Property="BorderBrush" Value="Transparent"/>
-                </Style>
+                <!-- Row highlight logic -->
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Background" Value="White"/>
+                        <Style.Triggers>
+                            <!-- Alternate base row color -->
+                            <Trigger Property="AlternationIndex" Value="1">
+                                <Setter Property="Background" Value="#FAFAFA"/>
+                            </Trigger>
 
-                <!-- Remove button focus visuals as well -->
-                <Style TargetType="Button">
-                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                </Style>
-            </DataGrid.Resources>
-            <DataGrid.RowStyle>
-                <Style TargetType="DataGridRow">
-                    <Style.Triggers>
-                        <!-- Green highlight for running task -->
-                        <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                            <Setter Property="Background" Value="#AAE6FFCC"/>
-                        </DataTrigger>
+                            <!-- Green when running -->
+                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                <Setter Property="Background" Value="#AAE6FFCC"/>
+                            </DataTrigger>
 
-                        <!-- Red pulse for just stopped -->
-                        <DataTrigger Binding="{Binding JustStopped}" Value="True">
-                            <Setter Property="Background" Value="#FFFFB3B3"/>
-                            <Setter Property="Opacity" Value="1.0"/>
-                        </DataTrigger>
-                    </Style.Triggers>
+                            <!-- Red flash when stopped -->
+                            <DataTrigger Binding="{Binding JustStopped}" Value="True">
+                                <Setter Property="Background" Value="#FFFFB3B3"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
 
-                    <!-- Fade transition animation for row background -->
-                    <Style.Resources>
-                        <Storyboard x:Key="FadeOutStoryboard">
-                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                             From="1.0" To="1.0"
-                                             Duration="0:0:0.2"/>
-                        </Storyboard>
-                    </Style.Resources>
-                </Style>
-            </DataGrid.RowStyle>
+                <!-- Columns -->
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Task"
+                                        Binding="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        Width="*"/>
+                    <DataGridTextColumn Header="Elapsed"
+                                        Binding="{Binding ElapsedFormatted}"
+                                        Width="120"
+                                        IsReadOnly="True"/>
 
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Task"
-                                    Binding="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                    Width="*"/>
-
-                <DataGridTextColumn Header="Elapsed"
-                                    Binding="{Binding ElapsedFormatted}"
-                                    Width="120"
-                                    IsReadOnly="True"/>
-
-                <DataGridTemplateColumn Header="Controls" Width="200" IsReadOnly="True">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Button Content="Start"
-                                        Command="{Binding StartCommand}"
-                                        Width="60" Margin="2"/>
-                                <Button Content="Stop"
-                                        Command="{Binding StopCommand}"
-                                        Width="60" Margin="2"/>
-                                <Button Content="X"
-                                        Command="{Binding DataContext.RemoveTaskCommand,
-                                                  RelativeSource={RelativeSource AncestorType=Window}}"
-                                        CommandParameter="{Binding}"
-                                        Width="30" Margin="2"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+                    <DataGridTemplateColumn Header="Controls" Width="210" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Button Content="Start"
+                                            Command="{Binding StartCommand}"
+                                            Width="60" Margin="3"/>
+                                    <Button Content="Stop"
+                                            Command="{Binding StopCommand}"
+                                            Width="60" Margin="3"/>
+                                    <Button Content="X"
+                                            Command="{Binding DataContext.RemoveTaskCommand,
+                                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            Width="30" Margin="3"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
     </DockPanel>
 </Window>
