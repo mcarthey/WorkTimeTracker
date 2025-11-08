@@ -1,29 +1,37 @@
-﻿namespace WorkTimeTracker.Models;
+﻿using System;
 
-public class TaskTimer
+namespace WorkTimeTracker.Models
 {
-    public string Description { get; set; } = string.Empty;
-    public TimeSpan Elapsed { get; private set; }
-
-    private DateTime? _startTime;
-
-    public void Start() => _startTime = DateTime.Now;
-    public void Stop()
+    public class TaskTimer
     {
-        if (_startTime != null)
+        private DateTime? _startTime;
+        public string Description { get; set; } = string.Empty;
+        public TimeSpan Elapsed { get; private set; } = TimeSpan.Zero;
+
+        public void Start() => _startTime ??= DateTime.Now;
+
+        public void Stop()
         {
-            Elapsed += DateTime.Now - _startTime.Value;
-            _startTime = null;
+            if (_startTime != null)
+            {
+                Elapsed += DateTime.Now - _startTime.Value;
+                _startTime = null;
+            }
         }
-    }
 
-    public void UpdateElapsed()
-    {
-        if (_startTime != null)
+        public void UpdateElapsed()
         {
-            var now = DateTime.Now;
-            Elapsed = Elapsed + (now - _startTime.Value);
-            _startTime = now;
+            if (_startTime != null)
+            {
+                Elapsed += DateTime.Now - _startTime.Value;
+                _startTime = DateTime.Now;
+            }
+        }
+
+        public void Reset()
+        {
+            _startTime = null;
+            Elapsed = TimeSpan.Zero;
         }
     }
 }

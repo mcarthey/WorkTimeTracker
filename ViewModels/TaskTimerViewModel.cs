@@ -4,10 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Timers;
 using System.Windows.Input;
 using System.Windows.Media;
-using WorkTimeTracker.Helpers;
 using WorkTimeTracker.Models;
-
-// alias to avoid confusion
 using Timer = System.Timers.Timer;
 
 namespace WorkTimeTracker.ViewModels
@@ -16,26 +13,22 @@ namespace WorkTimeTracker.ViewModels
     {
         private readonly TaskTimer _task;
         private readonly Timer _uiTimer;
-        private bool _isRunning;
-        private bool _justStopped;
-        public SolidColorBrush RowBrush { get; } = new SolidColorBrush(Colors.White);
-
 
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        private bool _isRunning;
+        public SolidColorBrush RowBrush { get; } = new SolidColorBrush(Colors.White);
 
         public TaskTimerViewModel(TaskTimer task)
         {
             _task = task;
+
             _uiTimer = new Timer(1000);
             _uiTimer.Elapsed += (_, _) =>
             {
-                // Update elapsed time continuously while running
-                if (IsRunning)
-                {
-                    _task.UpdateElapsed();
-                    OnPropertyChanged(nameof(ElapsedFormatted));
-                    OnPropertyChanged(nameof(TaskElapsedSeconds));
-                }
+                _task.UpdateElapsed();
+                OnPropertyChanged(nameof(ElapsedFormatted));
+                OnPropertyChanged(nameof(TaskElapsedSeconds));
             };
         }
 
@@ -53,12 +46,7 @@ namespace WorkTimeTracker.ViewModels
         }
 
         public string ElapsedFormatted => _task.Elapsed.ToString(@"hh\:mm\:ss");
-
-        // numeric value the main VM can sum
         public double TaskElapsedSeconds => _task.Elapsed.TotalSeconds;
-
-        public ICommand StartCommand => new RelayCommand(Start);
-        public ICommand StopCommand => new RelayCommand(Stop);
 
         public bool IsRunning
         {
@@ -69,57 +57,55 @@ namespace WorkTimeTracker.ViewModels
                 {
                     _isRunning = value;
                     OnPropertyChanged();
-
-                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        if (_isRunning)
-                            BrushAnimator.AnimateBrush(RowBrush, Color.FromRgb(170, 255, 204), 0.2);
-                        else
-                            BrushAnimator.AnimateBrush(RowBrush, Color.FromRgb(255, 179, 179), 0.2, hold: true);
-                    });
                 }
             }
         }
 
-
-        public bool JustStopped
-        {
-            get => _justStopped;
-            set
-            {
-                if (_justStopped != value)
-                {
-                    _justStopped = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        public ICommand StartCommand => new RelayCommand(Start);
+        public ICommand StopCommand => new RelayCommand(Stop);
 
         private void Start()
         {
-            if (!IsRunning)
-            {
-                _task.Start();
-                _uiTimer.Start();
-                IsRunning = true; // 🔔 Triggers parent reaction via PropertyChanged
-            }
+            // Stop all others first
+            (App.Current?.MainWindow?.DataContext as MainWindowViewModel)?.StopAllExcept(this);
+
+            _task.Start();
+            _uiTimer.Start();
+            IsRunning = true;
+
+            RowBrush.Dispatcher.Invoke(() =>
+                RowBrush.Color = Color.FromRgb(170, 255, 204)); // soft green
         }
 
-        public async void Stop()
+        public void Stop()
         {
-            if (IsRunning)
-            {
-                _task.Stop();
-                _uiTimer.Stop();
-                IsRunning = false;
-                OnPropertyChanged(nameof(ElapsedFormatted));
-                OnPropertyChanged(nameof(TaskElapsedSeconds));
+            _task.Stop();
+            _uiTimer.Stop();
+            IsRunning = false;
 
-                // 🔴 Flash indicator
-                JustStopped = true;
-                await Task.Delay(800); // 0.8 sec pulse
-                JustStopped = false;
-            }
+            OnPropertyChanged(nameof(ElapsedFormatted));
+            OnPropertyChanged(nameof(TaskElapsedSeconds));
+
+            // briefly red, then fade back to white
+            RowBrush.Dispatcher.Invoke(() =>
+                RowBrush.Color = Color.FromRgb(255, 179, 179));
+
+            var revertTimer = new Timer(700);
+            revertTimer.Elapsed += (_, _) =>
+            {
+                revertTimer.Stop();
+                RowBrush.Dispatcher.Invoke(() => RowBrush.Color = Colors.White);
+            };
+            revertTimer.Start();
+        }
+
+        public void Reset()
+        {
+            _task.Reset();
+            IsRunning = false;
+            RowBrush.Color = Colors.White;
+            OnPropertyChanged(nameof(ElapsedFormatted));
+            OnPropertyChanged(nameof(TaskElapsedSeconds));
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)

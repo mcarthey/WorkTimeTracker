@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Timers;
+using System.Windows;
 using System.Windows.Input;
 using WorkTimeTracker.Models;
 using Timer = System.Timers.Timer;
@@ -14,6 +16,7 @@ namespace WorkTimeTracker.ViewModels
     {
         private readonly Timer _clock;
         private string _currentTime = DateTime.Now.ToString("T");
+        private string _currentDate = DateTime.Now.ToString("yyyy-MM-dd");
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -25,13 +28,19 @@ namespace WorkTimeTracker.ViewModels
             set { _currentTime = value; OnPropertyChanged(); }
         }
 
+        public string CurrentDate
+        {
+            get => _currentDate;
+            set { _currentDate = value; OnPropertyChanged(); }
+        }
+
         public string TotalTimeFormatted =>
-            "Total Time: " + TimeSpan
-                .FromSeconds(Tasks.Sum(t => t.TaskElapsedSeconds))
-                .ToString(@"hh\:mm\:ss");
+            "Total Time: " + TimeSpan.FromSeconds(Tasks.Sum(t => t.TaskElapsedSeconds)).ToString(@"hh\:mm\:ss");
 
         public ICommand AddTaskCommand => new RelayCommand(AddTask);
         public ICommand RemoveTaskCommand => new RelayCommand<TaskTimerViewModel>(RemoveTask);
+        public ICommand ClearTimersCommand => new RelayCommand(ClearAllTimers);
+        public ICommand SaveDataCommand => new RelayCommand(SaveData);
 
         public MainWindowViewModel()
         {
@@ -39,49 +48,79 @@ namespace WorkTimeTracker.ViewModels
             _clock.Elapsed += (_, _) =>
             {
                 CurrentTime = DateTime.Now.ToString("T");
+                CurrentDate = DateTime.Now.ToString("yyyy-MM-dd");
                 OnPropertyChanged(nameof(TotalTimeFormatted));
             };
             _clock.Start();
         }
 
+        public void StopAllExcept(TaskTimerViewModel current)
+        {
+            foreach (var t in Tasks)
+            {
+                if (t != current && t.IsRunning)
+                    t.Stop();
+            }
+        }
+
         private void AddTask()
         {
-            var vm = new TaskTimerViewModel(new TaskTimer());
-            vm.PropertyChanged += Task_PropertyChanged;   // ✅ subscribe for IsRunning changes
-            Tasks.Add(vm);
+            Tasks.Add(new TaskTimerViewModel(new TaskTimer()));
             OnPropertyChanged(nameof(TotalTimeFormatted));
         }
 
         private void RemoveTask(TaskTimerViewModel? vm)
         {
-            if (vm != null)
+            if (vm == null) return;
+
+            var result = MessageBox.Show(
+                $"Delete task \"{vm.Description}\"?",
+                "Confirm Deletion",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
             {
-                vm.PropertyChanged -= Task_PropertyChanged; // ✅ clean unsubscribe
                 Tasks.Remove(vm);
+                OnPropertyChanged(nameof(TotalTimeFormatted));
             }
+        }
+
+        private void ClearAllTimers()
+        {
+            var result = MessageBox.Show(
+                "Reset all timers to 00:00:00?",
+                "Confirm Clear",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes) return;
+
+            foreach (var t in Tasks)
+            {
+                t.Stop();
+                t.Reset();
+            }
+
             OnPropertyChanged(nameof(TotalTimeFormatted));
         }
 
-        private void Task_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        private void SaveData()
         {
-            if (e.PropertyName == nameof(TaskTimerViewModel.IsRunning))
-            {
-                var changedTask = sender as TaskTimerViewModel;
-                if (changedTask?.IsRunning == true)
-                {
-                    // ✅ Stop all other timers when one starts
-                    foreach (var task in Tasks)
-                    {
-                        if (task != changedTask && task.IsRunning)
-                        {
-                            task.Stop();
-                        }
-                    }
-                }
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var fileName = $"time_tracking_{timestamp}.txt";
+            var lines = new[] {
+                $"Work Time Tracker - {DateTime.Now}",
+                new string('=', 40)
+            }.Concat(Tasks.Select((t, i) =>
+                $"{i + 1}. {t.Description,-25} {t.ElapsedFormatted}"))
+             .Concat(new[] {
+                 new string('-', 40),
+                 $"Total: {TimeSpan.FromSeconds(Tasks.Sum(t => t.TaskElapsedSeconds)):hh\\:mm\\:ss}"
+             });
 
-                // ✅ Update total time display as timers start/stop
-                OnPropertyChanged(nameof(TotalTimeFormatted));
-            }
+            File.WriteAllLines(fileName, lines);
+            MessageBox.Show($"Saved data to {fileName}", "Saved", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)

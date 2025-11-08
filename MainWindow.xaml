@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Work Time Tracker"
-        Height="500" Width="760"
+        Height="500" Width="780"
         FontFamily="Segoe UI"
         FontSize="13"
         Background="#F8F9FB">
@@ -68,6 +68,14 @@
                         <Setter Property="Background" Value="#3C91E6"/>
                         <Setter Property="BorderBrush" Value="#2B6FB6"/>
                     </Trigger>
+                    <Trigger Property="Content" Value="🧹 Clear Timers">
+                        <Setter Property="Background" Value="#8C8CF8"/>
+                        <Setter Property="BorderBrush" Value="#6E6EE0"/>
+                    </Trigger>
+                    <Trigger Property="Content" Value="💾 Save">
+                        <Setter Property="Background" Value="#4CAF50"/>
+                        <Setter Property="BorderBrush" Value="#3E9141"/>
+                    </Trigger>
                     <Trigger Property="Content" Value="X">
                         <Setter Property="Background" Value="#999999"/>
                         <Setter Property="BorderBrush" Value="#7A7A7A"/>
@@ -93,26 +101,50 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
+            <!-- Date / Time / Total -->
             <StackPanel Orientation="Vertical" Grid.Column="0">
-                <TextBlock Text="{Binding CurrentTime}"
-                           FontSize="28"
+                <TextBlock Text="{Binding CurrentDate}"
+                           FontSize="20"
                            FontWeight="SemiBold"
                            Foreground="#333"
+                           Margin="0,0,0,2"/>
+                <TextBlock Text="{Binding CurrentTime}"
+                           FontSize="24"
+                           FontWeight="SemiBold"
+                           Foreground="#444"
                            Margin="0,0,0,4"/>
                 <TextBlock Text="{Binding TotalTimeFormatted}"
-                           FontSize="18"
+                           FontSize="16"
                            Foreground="#666"/>
             </StackPanel>
 
-            <Button Content="➕ Add Task"
-                    Command="{Binding AddTaskCommand}"
-                    FontWeight="Bold"
-                    FontSize="14"
-                    Width="140"
-                    Padding="6"
-                    Margin="10,0,0,0"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Center"/>
+            <!-- Toolbar -->
+            <StackPanel Orientation="Horizontal"
+                        Grid.Column="1"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Margin="10,0,0,0">
+                <Button Content="➕ Add Task"
+                        Command="{Binding AddTaskCommand}"
+                        FontWeight="Bold"
+                        FontSize="14"
+                        Width="120"
+                        Padding="6"
+                        Margin="0,0,8,0"/>
+                <Button Content="🧹 Clear Timers"
+                        Command="{Binding ClearTimersCommand}"
+                        FontWeight="Bold"
+                        FontSize="14"
+                        Width="140"
+                        Padding="6"
+                        Margin="0,0,8,0"/>
+                <Button Content="💾 Save"
+                        Command="{Binding SaveDataCommand}"
+                        FontWeight="Bold"
+                        FontSize="14"
+                        Width="90"
+                        Padding="6"/>
+            </StackPanel>
         </Grid>
 
         <!-- ====== DataGrid Container ====== -->
@@ -141,12 +173,12 @@
                       EnableRowVirtualization="False"
                       EnableColumnVirtualization="False">
 
-                <!-- === RowStyle binds to ViewModel brush === -->
+                <!-- Row uses VM-owned brush so animations are stable -->
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow">
                         <Setter Property="Background" Value="{Binding RowBrush}"/>
                         <Style.Triggers>
-                            <!-- Alternate slight tint -->
+                            <!-- Optional slight alternation visual with opacity -->
                             <Trigger Property="AlternationIndex" Value="1">
                                 <Setter Property="Opacity" Value="0.96"/>
                             </Trigger>
@@ -154,7 +186,7 @@
                     </Style>
                 </DataGrid.RowStyle>
 
-                <!-- === Columns === -->
+                <!-- Columns -->
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Task"
                                         Binding="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
