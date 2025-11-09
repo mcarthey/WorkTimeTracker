@@ -125,7 +125,7 @@ namespace WorkTimeTracker.ViewModels
             if (vm == null) return;
 
             _pendingDeleteTask = vm;
-            NotificationMessage = $"Confirm delete: \"{vm.Description}\"";
+            NotificationMessage = $"Confirm delete: '{vm.Description}'";
             IsConfirming = true;
             NotificationVisible = true;
             CurrentNotificationMode = NotificationMode.Confirm;
