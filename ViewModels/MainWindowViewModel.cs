@@ -125,13 +125,21 @@ namespace WorkTimeTracker.ViewModels
             if (vm == null) return;
 
             _pendingDeleteTask = vm;
-            NotificationMessage = $"Confirm delete: '{vm.Description}'";
+            // Truncate to 40 characters (adjust as needed)
+            var shortDesc = Truncate(vm.Description, 15);
+            NotificationMessage = $"Delete? {shortDesc}";
             IsConfirming = true;
             NotificationVisible = true;
             CurrentNotificationMode = NotificationMode.Confirm;
             ConfirmCommand = new RelayCommand(ConfirmDeleteTask);
         }
 
+
+        private string Truncate(string value, int maxLength)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+            return value.Length <= maxLength ? value : value.Substring(0, maxLength - 1) + "…";
+        }
 
         private void ConfirmDeleteTask()
         {

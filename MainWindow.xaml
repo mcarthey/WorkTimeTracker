@@ -160,8 +160,8 @@
                 <!-- Notification row (always reserves space) -->
                 <Border x:Name="NotificationBorder"
         Grid.Row="1"
-        MinHeight="36"
-        Padding="8"
+        MinHeight="40"
+        Padding="10"
         Margin="0,8,0,0">
                     <Border.Style>
                         <Style TargetType="Border">
@@ -170,98 +170,109 @@
                             <Setter Property="BorderThickness" Value="1"/>
                             <Setter Property="CornerRadius" Value="4"/>
                             <Style.Triggers>
+                                <!-- Success -->
+                                <DataTrigger Binding="{Binding NotificationType}" Value="Success">
+                                    <Setter Property="Background" Value="#E6F4EA"/>
+                                    <Setter Property="BorderBrush" Value="#4CAF50"/>
+                                </DataTrigger>
+                                <!-- Error -->
+                                <DataTrigger Binding="{Binding NotificationType}" Value="Error">
+                                    <Setter Property="Background" Value="#FDECEA"/>
+                                    <Setter Property="BorderBrush" Value="#F44336"/>
+                                </DataTrigger>
+                                <!-- Default info -->
                                 <DataTrigger Binding="{Binding NotificationVisible}" Value="True">
-                                    <Setter Property="Background" Value="#FFFAE5"/>
+                                    <Setter Property="Background" Value="#FFFBEA"/>
                                     <Setter Property="BorderBrush" Value="#FFD700"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
 
-                    <!-- Replace the notification buttons area with this corrected block -->
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                        <TextBlock Text="{Binding NotificationMessage}" 
-               Foreground="#5A4A1E"
-               FontWeight="SemiBold"
-               FontSize="14"
-               VerticalAlignment="Center"
-               Visibility="{Binding NotificationVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
-               Margin="0,0,12,0"/>
+                        <TextBlock Text="{Binding NotificationMessage}"
+                   Foreground="#333"
+                   FontWeight="SemiBold"
+                   FontSize="14"
+                   VerticalAlignment="Center"
+                   Visibility="{Binding NotificationVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                   Margin="0,0,16,0"/>
 
                         <!-- Confirm Button -->
                         <Button ToolTip="Confirm"
-            Command="{Binding ConfirmCommand}"
-            Visibility="{Binding IsConfirming, Converter={StaticResource BooleanToVisibilityConverter}}"
-            Padding="10,4"
-            Margin="0,0,8,0"
-            FontSize="13"
-            FontWeight="Bold"
-            Foreground="White"
-            Cursor="Hand">
+                Command="{Binding ConfirmCommand}"
+                Visibility="{Binding IsConfirming, Converter={StaticResource BooleanToVisibilityConverter}}"
+                Padding="10,6"
+                Margin="0,0,8,0"
+                FontSize="14"
+                FontWeight="Bold"
+                Foreground="White"
+                Cursor="Hand"
+                Background="#4CAF50"
+                BorderBrush="#3E9141"
+                BorderThickness="1"
+                Width="80">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="bd"
-                        Background="#3CB371"
-                        BorderBrush="#2E8B57"
-                        BorderThickness="1"
-                        CornerRadius="6"
-                        SnapsToDevicePixels="True">
+                            CornerRadius="4"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1"
+                            SnapsToDevicePixels="True">
                                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="bd" Property="Background" Value="#2E8B57"/>
+                                            <Setter TargetName="bd" Property="Background" Value="#45A049"/>
                                         </Trigger>
                                         <Trigger Property="IsPressed" Value="True">
-                                            <Setter TargetName="bd" Property="Background" Value="#256F46"/>
-                                        </Trigger>
-                                        <Trigger Property="IsEnabled" Value="False">
-                                            <Setter TargetName="bd" Property="Opacity" Value="0.5"/>
+                                            <Setter TargetName="bd" Property="Background" Value="#3D8B40"/>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
                             </Button.Template>
-                            <!-- Use a simple glyph label rather than ContentText to avoid layout shifts -->
-                            <TextBlock Text="Confirm" Foreground="White" FontWeight="Bold" FontSize="13" />
+                            <TextBlock Text="✓" FontSize="16" FontWeight="Bold"/>
                         </Button>
 
                         <!-- Cancel Button -->
                         <Button ToolTip="Cancel"
-            Command="{Binding CancelCommand}"
-            Visibility="{Binding IsConfirming, Converter={StaticResource BooleanToVisibilityConverter}}"
-            Padding="10,4"
-            FontSize="13"
-            FontWeight="Bold"
-            Foreground="White"
-            Cursor="Hand">
+                Command="{Binding CancelCommand}"
+                Visibility="{Binding IsConfirming, Converter={StaticResource BooleanToVisibilityConverter}}"
+                Padding="10,6"
+                FontSize="14"
+                FontWeight="Bold"
+                Foreground="White"
+                Cursor="Hand"
+                Background="#F44336"
+                BorderBrush="#D32F2F"
+                BorderThickness="1"
+                Width="80">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="bd"
-                        Background="#E74C3C"
-                        BorderBrush="#C0392B"
-                        BorderThickness="1"
-                        CornerRadius="6"
-                        SnapsToDevicePixels="True">
+                            CornerRadius="4"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1"
+                            SnapsToDevicePixels="True">
                                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="bd" Property="Background" Value="#C0392B"/>
+                                            <Setter TargetName="bd" Property="Background" Value="#E53935"/>
                                         </Trigger>
                                         <Trigger Property="IsPressed" Value="True">
-                                            <Setter TargetName="bd" Property="Background" Value="#A93226"/>
-                                        </Trigger>
-                                        <Trigger Property="IsEnabled" Value="False">
-                                            <Setter TargetName="bd" Property="Opacity" Value="0.5"/>
+                                            <Setter TargetName="bd" Property="Background" Value="#C62828"/>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
                             </Button.Template>
-                            <TextBlock Text="Cancel" Foreground="White" FontWeight="Bold" FontSize="13" />
+                            <TextBlock Text="✕" FontSize="16" FontWeight="Bold"/>
                         </Button>
                     </StackPanel>
-
                 </Border>
+
 
             </Grid>
 
