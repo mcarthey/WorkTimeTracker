@@ -5,8 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Timers;
-using System.Windows;
 using System.Windows.Input;
+using System.Threading.Tasks;
 using WorkTimeTracker.Models;
 using Timer = System.Timers.Timer;
 
@@ -22,6 +22,34 @@ namespace WorkTimeTracker.ViewModels
 
         public ObservableCollection<TaskTimerViewModel> Tasks { get; } = new();
 
+        public enum NotificationMode
+        {
+            Info,
+            Confirm
+        }
+
+        private NotificationMode _notificationMode;
+        public NotificationMode CurrentNotificationMode
+        {
+            get => _notificationMode;
+            set { _notificationMode = value; OnPropertyChanged(); }
+        }
+
+
+        private bool _isConfirming;
+        public bool IsConfirming
+        {
+            get => _isConfirming;
+            set { _isConfirming = value; OnPropertyChanged(); }
+        }
+
+        private ICommand _confirmCommand;
+        public ICommand ConfirmCommand
+        {
+            get => _confirmCommand;
+            set { _confirmCommand = value; OnPropertyChanged(); }
+        }
+
         public string CurrentTime
         {
             get => _currentTime;
@@ -34,6 +62,20 @@ namespace WorkTimeTracker.ViewModels
             set { _currentDate = value; OnPropertyChanged(); }
         }
 
+        private string _notificationMessage;
+        public string NotificationMessage
+        {
+            get => _notificationMessage;
+            set { _notificationMessage = value; OnPropertyChanged(); }
+        }
+
+        private bool _notificationVisible;
+        public bool NotificationVisible
+        {
+            get => _notificationVisible;
+            set { _notificationVisible = value; OnPropertyChanged(); }
+        }
+
         public string TotalTimeFormatted =>
             "Total Time: " + TimeSpan.FromSeconds(Tasks.Sum(t => t.TaskElapsedSeconds)).ToString(@"hh\:mm\:ss");
 
@@ -41,6 +83,12 @@ namespace WorkTimeTracker.ViewModels
         public ICommand RemoveTaskCommand => new RelayCommand<TaskTimerViewModel>(RemoveTask);
         public ICommand ClearTimersCommand => new RelayCommand(ClearAllTimers);
         public ICommand SaveDataCommand => new RelayCommand(SaveData);
+
+        private ICommand _cancelCommand;
+        public ICommand CancelCommand
+        {
+            get => _cancelCommand ??= new RelayCommand(CancelConfirmation);
+        }
 
         public MainWindowViewModel()
         {
@@ -67,42 +115,66 @@ namespace WorkTimeTracker.ViewModels
         {
             Tasks.Add(new TaskTimerViewModel(new TaskTimer()));
             OnPropertyChanged(nameof(TotalTimeFormatted));
+            ShowNotification("Task added.");
         }
+
+        private TaskTimerViewModel? _pendingDeleteTask;
 
         private void RemoveTask(TaskTimerViewModel? vm)
         {
             if (vm == null) return;
 
-            var result = MessageBox.Show(
-                $"Delete task \"{vm.Description}\"?",
-                "Confirm Deletion",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                Tasks.Remove(vm);
-                OnPropertyChanged(nameof(TotalTimeFormatted));
-            }
+            _pendingDeleteTask = vm;
+            NotificationMessage = $"Confirm delete: \"{vm.Description}\"";
+            IsConfirming = true;
+            NotificationVisible = true;
+            CurrentNotificationMode = NotificationMode.Confirm;
+            ConfirmCommand = new RelayCommand(ConfirmDeleteTask);
         }
+
+
+        private void ConfirmDeleteTask()
+        {
+            if (_pendingDeleteTask != null)
+            {
+                Tasks.Remove(_pendingDeleteTask);
+                OnPropertyChanged(nameof(TotalTimeFormatted));
+                ShowNotification("Task deleted.");
+                _pendingDeleteTask = null;
+            }
+            IsConfirming = false;
+            CurrentNotificationMode = NotificationMode.Info;
+        }
+
+        private void CancelConfirmation()
+        {
+            IsConfirming = false;
+            NotificationVisible = false;
+            NotificationMessage = string.Empty;
+            _pendingDeleteTask = null;
+            CurrentNotificationMode = NotificationMode.Info;
+        }
+
 
         private void ClearAllTimers()
         {
-            var result = MessageBox.Show(
-                "Reset all timers to 00:00:00?",
-                "Confirm Clear",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
+            NotificationMessage = "Confirm reset all timers?";
+            IsConfirming = true;
+            NotificationVisible = true;
+            ConfirmCommand = new RelayCommand(ConfirmClearAllTimers);
+            // Do NOT call ShowNotification here!
+        }
 
-            if (result != MessageBoxResult.Yes) return;
-
+        private void ConfirmClearAllTimers()
+        {
             foreach (var t in Tasks)
             {
                 t.Stop();
                 t.Reset();
             }
-
             OnPropertyChanged(nameof(TotalTimeFormatted));
+            ShowNotification("All timers reset.");
+            IsConfirming = false;
         }
 
         private void SaveData()
@@ -120,8 +192,24 @@ namespace WorkTimeTracker.ViewModels
              });
 
             File.WriteAllLines(fileName, lines);
-            MessageBox.Show($"Saved data to {fileName}", "Saved", MessageBoxButton.OK, MessageBoxImage.Information);
+            ShowNotification($"Saved data to {fileName}");
         }
+
+        private async void ShowNotification(string message, int durationMs = 3000)
+        {
+            NotificationMessage = message;
+            NotificationVisible = true;
+            IsConfirming = false;
+            CurrentNotificationMode = NotificationMode.Info;
+            await Task.Delay(durationMs);
+            // Only clear if still in Info mode
+            if (CurrentNotificationMode == NotificationMode.Info)
+            {
+                NotificationVisible = false;
+                NotificationMessage = string.Empty;
+            }
+        }
+
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

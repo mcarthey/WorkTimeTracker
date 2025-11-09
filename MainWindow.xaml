@@ -10,6 +10,10 @@
         FontSize="13"
         Background="#F8F9FB">
 
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
+
     <DockPanel Margin="20">
 
         <!-- ====== Shared styles/resources ====== -->
@@ -104,48 +108,114 @@
             <!-- Date / Time / Total -->
             <StackPanel Orientation="Vertical" Grid.Column="0">
                 <TextBlock Text="{Binding CurrentDate}"
-                           FontSize="20"
-                           FontWeight="SemiBold"
-                           Foreground="#333"
-                           Margin="0,0,0,2"/>
+                   FontSize="20"
+                   FontWeight="SemiBold"
+                   Foreground="#333"
+                   Margin="0,0,0,2"/>
                 <TextBlock Text="{Binding CurrentTime}"
-                           FontSize="24"
-                           FontWeight="SemiBold"
-                           Foreground="#444"
-                           Margin="0,0,0,4"/>
+                   FontSize="24"
+                   FontWeight="SemiBold"
+                   Foreground="#444"
+                   Margin="0,0,0,4"/>
                 <TextBlock Text="{Binding TotalTimeFormatted}"
-                           FontSize="16"
-                           Foreground="#666"/>
+                   FontSize="16"
+                   Foreground="#666"/>
             </StackPanel>
 
-            <!-- Toolbar -->
-            <StackPanel Orientation="Horizontal"
-                        Grid.Column="1"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Margin="10,0,0,0">
-                <Button Content="➕ Add Task"
-                        Command="{Binding AddTaskCommand}"
-                        FontWeight="Bold"
-                        FontSize="14"
-                        Width="120"
-                        Padding="6"
-                        Margin="0,0,8,0"/>
-                <Button Content="🧹 Clear Timers"
-                        Command="{Binding ClearTimersCommand}"
-                        FontWeight="Bold"
-                        FontSize="14"
-                        Width="140"
-                        Padding="6"
-                        Margin="0,0,8,0"/>
-                <Button Content="💾 Save"
-                        Command="{Binding SaveDataCommand}"
-                        FontWeight="Bold"
-                        FontSize="14"
-                        Width="90"
-                        Padding="6"/>
-            </StackPanel>
+            <!-- Toolbar and notification in right column -->
+            <Grid Grid.Column="1"
+      HorizontalAlignment="Right"
+      VerticalAlignment="Center"
+      Margin="10,0,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <!-- Let notification row size to content -->
+                </Grid.RowDefinitions>
+
+                <!-- Buttons row -->
+                <StackPanel Orientation="Horizontal" Grid.Row="0">
+                    <Button Content="➕ Add Task"
+                Command="{Binding AddTaskCommand}"
+                FontWeight="Bold"
+                FontSize="14"
+                Width="120"
+                Padding="6"
+                Margin="0,0,8,0"/>
+                    <Button Content="🧹 Clear Timers"
+                Command="{Binding ClearTimersCommand}"
+                FontWeight="Bold"
+                FontSize="14"
+                Width="140"
+                Padding="6"
+                Margin="0,0,8,0"/>
+                    <Button Content="💾 Save"
+                Command="{Binding SaveDataCommand}"
+                FontWeight="Bold"
+                FontSize="14"
+                Width="90"
+                Padding="6"/>
+                </StackPanel>
+
+                <!-- Notification row (always reserves space) -->
+                <Border x:Name="NotificationBorder"
+        Grid.Row="1"
+        MinHeight="36"
+        Padding="8"
+        Margin="0,8,0,0">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Setter Property="CornerRadius" Value="4"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding NotificationVisible}" Value="True">
+                                    <Setter Property="Background" Value="#FFFAE5"/>
+                                    <Setter Property="BorderBrush" Value="#FFD700"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding NotificationMessage}" 
+                   Foreground="#8A6D3B"
+                   FontWeight="SemiBold"
+                   FontSize="14"
+                   VerticalAlignment="Center"
+                   Visibility="{Binding NotificationVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                        <Button Content="✅"
+        ToolTip="Confirm"
+        Command="{Binding ConfirmCommand}"
+        Margin="12,0,0,0"
+        Width="28" Height="28"
+        FontSize="15"
+        FontWeight="Bold"
+        Background="#FFD700"        
+                            BorderBrush="#FFEA70"
+                            Foreground="#8A6D3B"
+                            Visibility="{Binding IsConfirming, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <Button Content="❌"
+        ToolTip="Cancel"
+        Command="{Binding CancelCommand}"
+        Margin="6,0,0,0"
+        Width="28" Height="28"
+        FontSize="15"
+        FontWeight="Bold"
+        Background="#F8D7DA"
+                                BorderBrush="#E57373"
+                                Foreground="#8A6D3B"
+                                Visibility="{Binding IsConfirming, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+
+                    </StackPanel>
+                </Border>
+
+            </Grid>
+
         </Grid>
+
 
         <!-- ====== DataGrid Container ====== -->
         <Border CornerRadius="6"
