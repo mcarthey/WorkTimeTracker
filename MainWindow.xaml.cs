@@ -22,4 +22,9 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = new MainWindowViewModel();
     }
+
+    private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+
+    }
 }

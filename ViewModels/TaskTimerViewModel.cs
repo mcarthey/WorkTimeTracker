@@ -64,6 +64,27 @@ namespace WorkTimeTracker.ViewModels
         public ICommand StartCommand => new RelayCommand(Start);
         public ICommand StopCommand => new RelayCommand(Stop);
 
+        // --- Added for +15/-15 min functionality ---
+        public ICommand Add15MinCommand => new RelayCommand(Add15Minutes);
+        public ICommand Subtract15MinCommand => new RelayCommand(Subtract15Minutes);
+
+        private void Add15Minutes()
+        {
+            _task.Elapsed = _task.Elapsed.Add(TimeSpan.FromMinutes(15));
+            OnPropertyChanged(nameof(ElapsedFormatted));
+            OnPropertyChanged(nameof(TaskElapsedSeconds));
+        }
+
+        private void Subtract15Minutes()
+        {
+            _task.Elapsed = _task.Elapsed - TimeSpan.FromMinutes(15);
+            if (_task.Elapsed < TimeSpan.Zero)
+                _task.Elapsed = TimeSpan.Zero;
+            OnPropertyChanged(nameof(ElapsedFormatted));
+            OnPropertyChanged(nameof(TaskElapsedSeconds));
+        }
+        // -------------------------------------------
+
         private void Start()
         {
             // Stop all others first

@@ -3,6 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:WorkTimeTracker.ViewModels"
+        d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel, IsDesignTimeCreatable=True}"
         mc:Ignorable="d"
         Title="Work Time Tracker"
         Height="500" Width="780"
@@ -303,7 +305,7 @@
                       SelectionUnit="FullRow"
                       SelectedItem="{x:Null}"
                       EnableRowVirtualization="False"
-                      EnableColumnVirtualization="False">
+                      EnableColumnVirtualization="False" SelectionChanged="DataGrid_SelectionChanged">
 
                 <!-- Row uses VM-owned brush so animations are stable -->
                 <DataGrid.RowStyle>
@@ -323,10 +325,31 @@
                     <DataGridTextColumn Header="Task"
                                         Binding="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                         Width="*"/>
-                    <DataGridTextColumn Header="Elapsed"
-                                        Binding="{Binding ElapsedFormatted}"
-                                        Width="120"
-                                        IsReadOnly="True"/>
+                    <DataGridTemplateColumn Header="Elapsed" Width="170" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding ElapsedFormatted}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <Button Content="-15" 
+                                            Command="{Binding Subtract15MinCommand}" 
+                                            Width="25" Height="18" 
+                                            FontSize="10"
+                                            Padding="0"
+                                            Foreground="Black"
+                                            ToolTip="Subtract 15 minutes"/>
+                                    <Button Content="+15" 
+                                            Command="{Binding Add15MinCommand}" 
+                                            Width="25" Height="18" 
+                                            FontSize="10"
+                                            Margin="0,0,2,0"
+                                            Padding="0"
+                                            Foreground="Black"
+                                            ToolTip="Add 15 minutes"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
 
                     <DataGridTemplateColumn Header="Controls" Width="210" IsReadOnly="True">
                         <DataGridTemplateColumn.CellTemplate>

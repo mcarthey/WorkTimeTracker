@@ -6,7 +6,7 @@ namespace WorkTimeTracker.Models
     {
         private DateTime? _startTime;
         public string Description { get; set; } = string.Empty;
-        public TimeSpan Elapsed { get; private set; } = TimeSpan.Zero;
+        public TimeSpan Elapsed { get; internal set; } = TimeSpan.Zero;
 
         public void Start() => _startTime ??= DateTime.Now;
 

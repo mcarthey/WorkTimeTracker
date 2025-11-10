@@ -100,6 +100,13 @@ namespace WorkTimeTracker.ViewModels
                 OnPropertyChanged(nameof(TotalTimeFormatted));
             };
             _clock.Start();
+
+            // Design-time sample data
+            if (DesignerProperties.GetIsInDesignMode(new System.Windows.DependencyObject()))
+            {
+                Tasks.Add(new TaskTimerViewModel(new TaskTimer { Description = "Sample Task 1", Elapsed = TimeSpan.FromMinutes(45) }));
+                Tasks.Add(new TaskTimerViewModel(new TaskTimer { Description = "Sample Task 2", Elapsed = TimeSpan.FromMinutes(120) }));
+            }
         }
 
         public void StopAllExcept(TaskTimerViewModel current)
