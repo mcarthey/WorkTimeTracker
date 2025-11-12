@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Timers;
 using System.Windows.Input;
 using System.Windows.Media;
+using WorkTimeTracker.Interfaces;
 using WorkTimeTracker.Models;
 using Timer = System.Timers.Timer;
 
@@ -13,15 +14,25 @@ namespace WorkTimeTracker.ViewModels
     {
         private readonly TaskTimer _task;
         private readonly Timer _uiTimer;
+        private readonly ITimerCoordinationService _timerCoordinationService;
+        private readonly IDirtyTrackingService _dirtyTrackingService;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
         private bool _isRunning;
+        private string _committedDescription; // Tracks last committed description value
         public SolidColorBrush RowBrush { get; } = new SolidColorBrush(Colors.White);
 
-        public TaskTimerViewModel(TaskTimer task)
+        public TaskTimerViewModel(
+            TaskTimer task,
+            ITimerCoordinationService timerCoordinationService,
+            IDirtyTrackingService dirtyTrackingService)
         {
-            _task = task;
+            _task = task ?? throw new ArgumentNullException(nameof(task));
+            _timerCoordinationService = timerCoordinationService ?? throw new ArgumentNullException(nameof(timerCoordinationService));
+            _dirtyTrackingService = dirtyTrackingService ?? throw new ArgumentNullException(nameof(dirtyTrackingService));
+
+            _committedDescription = task.Description;
 
             _uiTimer = new Timer(1000);
             _uiTimer.Elapsed += (_, _) =>
@@ -30,6 +41,9 @@ namespace WorkTimeTracker.ViewModels
                 OnPropertyChanged(nameof(ElapsedFormatted));
                 OnPropertyChanged(nameof(TaskElapsedSeconds));
             };
+
+            // Register with coordination service
+            _timerCoordinationService.RegisterTimer(this);
         }
 
         public string Description
@@ -41,7 +55,22 @@ namespace WorkTimeTracker.ViewModels
                 {
                     _task.Description = value;
                     OnPropertyChanged();
+                    // Note: This still fires on every keystroke for UI binding
+                    // But we DON'T mark as dirty here - only on commit
                 }
+            }
+        }
+
+        /// <summary>
+        /// Commits the current description value, marking the task as updated.
+        /// Call this on LostFocus or Enter key press, NOT on every keystroke.
+        /// </summary>
+        public void CommitDescription()
+        {
+            if (_committedDescription != _task.Description)
+            {
+                _committedDescription = _task.Description;
+                _dirtyTrackingService.MarkTaskUpdated();
             }
         }
 
@@ -73,6 +102,9 @@ namespace WorkTimeTracker.ViewModels
             _task.Elapsed = _task.Elapsed.Add(TimeSpan.FromMinutes(15));
             OnPropertyChanged(nameof(ElapsedFormatted));
             OnPropertyChanged(nameof(TaskElapsedSeconds));
+
+            // Mark as changed since time was manually adjusted
+            _dirtyTrackingService.MarkTimerChanged();
         }
 
         private void Subtract15Minutes()
@@ -82,27 +114,47 @@ namespace WorkTimeTracker.ViewModels
                 _task.Elapsed = TimeSpan.Zero;
             OnPropertyChanged(nameof(ElapsedFormatted));
             OnPropertyChanged(nameof(TaskElapsedSeconds));
+
+            // Mark as changed since time was manually adjusted
+            _dirtyTrackingService.MarkTimerChanged();
         }
         // -------------------------------------------
 
         private void Start()
         {
-            // Stop all others first
-            (App.Current?.MainWindow?.DataContext as MainWindowViewModel)?.StopAllExcept(this);
+            // Use injected service instead of tight coupling to MainWindowViewModel
+            _timerCoordinationService.StopAllTimersExcept(this);
 
             _task.Start();
             _uiTimer.Start();
             IsRunning = true;
 
+            // Mark timer as changed for persistence tracking
+            _dirtyTrackingService.MarkTimerChanged();
+
             RowBrush.Dispatcher.Invoke(() =>
                 RowBrush.Color = Color.FromRgb(170, 255, 204)); // soft green
         }
 
-        public void Stop()
+        private void Stop()
         {
+            StopTimer();
+        }
+
+        /// <summary>
+        /// Stops the timer. Can be called by command or by TimerCoordinationService.
+        /// </summary>
+        public void StopTimer()
+        {
+            if (!IsRunning)
+                return;
+
             _task.Stop();
             _uiTimer.Stop();
             IsRunning = false;
+
+            // Mark timer as changed for persistence tracking
+            _dirtyTrackingService.MarkTimerChanged();
 
             OnPropertyChanged(nameof(ElapsedFormatted));
             OnPropertyChanged(nameof(TaskElapsedSeconds));
@@ -127,6 +179,19 @@ namespace WorkTimeTracker.ViewModels
             RowBrush.Color = Colors.White;
             OnPropertyChanged(nameof(ElapsedFormatted));
             OnPropertyChanged(nameof(TaskElapsedSeconds));
+
+            // Mark as changed since timer was reset
+            _dirtyTrackingService.MarkTimerChanged();
+        }
+
+        /// <summary>
+        /// Cleanup method to unregister from services
+        /// </summary>
+        public void Cleanup()
+        {
+            _timerCoordinationService.UnregisterTimer(this);
+            _uiTimer?.Stop();
+            _uiTimer?.Dispose();
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)

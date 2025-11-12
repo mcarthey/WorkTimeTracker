@@ -322,9 +322,23 @@
 
                 <!-- Columns -->
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Task"
-                                        Binding="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                        Width="*"/>
+                    <!-- Task Description Column with LostFocus commit pattern -->
+                    <DataGridTemplateColumn Header="Task" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Description}" VerticalAlignment="Center" Padding="4"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                        <DataGridTemplateColumn.CellEditingTemplate>
+                            <DataTemplate>
+                                <TextBox Text="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         LostFocus="TextBox_LostFocus"
+                                         VerticalAlignment="Center"
+                                         BorderThickness="0"
+                                         Padding="4"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellEditingTemplate>
+                    </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Elapsed" Width="170" IsReadOnly="True">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
